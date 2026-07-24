@@ -10,8 +10,8 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 
-builder.Services.AddOpenTelemetry()
-    .UseFunctionsWorkerDefaults()
-    .UseAzureMonitorExporter();
+// builder.Services.AddOpenTelemetry()
+//    .UseFunctionsWorkerDefaults()
+//    .UseAzureMonitorExporter();
 
 builder.Build().Run();
