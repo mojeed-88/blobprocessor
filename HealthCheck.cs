@@ -22,6 +22,11 @@ public class HealthCheck
     req.Method,
     req.Path,
     DateTime.UtcNow);
-        return new OkObjectResult("Welcome to Azure Functions!");
+        return new OkObjectResult(new
+{
+    status = "Healthy",
+    service = "blobprocessor",
+    timestampUtc = DateTime.UtcNow
+});
     }
 }
