@@ -15,7 +15,7 @@ public class HealthCheck
     }
 
     [Function("HealthCheck")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+    public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
     {
         _logger.LogInformation(
     "Health check endpoint invoked. Method: {Method}, Path: {Path}, TimeUtc: {TimeUtc}",
