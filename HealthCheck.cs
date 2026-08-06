@@ -24,12 +24,6 @@ public class HealthCheck
             req.Path,
             DateTime.UtcNow);
 
-        // Simulate a failure for testing
-        if (req.Query["fail"] == "true")
-        {
-            throw new InvalidOperationException("Simulated failure for training.");
-        }
-
         return new OkObjectResult(new
         {
             Status = "Healthy",
