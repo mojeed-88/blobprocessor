@@ -13,6 +13,8 @@ builder.ConfigureFunctionsWebApplication();
 
 builder.Services.AddScoped<InvoiceProcessor>();
 
+builder.Services.AddScoped<ProcessedInvoiceStore>();
+
 
 // builder.Services.AddOpenTelemetry()
 //    .UseFunctionsWorkerDefaults()

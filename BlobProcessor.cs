@@ -1,3 +1,4 @@
+using blobprocessor.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -6,44 +7,48 @@ namespace blobprocessor;
 public class BlobProcessor
 {
     private readonly ILogger<BlobProcessor> _logger;
+    private readonly InvoiceProcessor _invoiceProcessor;
 
-    public BlobProcessor(ILogger<BlobProcessor> logger)
+    public BlobProcessor(
+        ILogger<BlobProcessor> logger,
+        InvoiceProcessor invoiceProcessor)
     {
         _logger = logger;
+        _invoiceProcessor = invoiceProcessor;
     }
 
     [Function("BlobProcessor")]
-public async Task Run(
-    [BlobTrigger("invoices/{name}", Connection = "AzureWebJobsStorage")]
-    Stream blob,
-    string name)
-{
-    _logger.LogInformation(
-        "Blob processing started. BlobName: {BlobName}, SizeBytes: {SizeBytes}, TimeUtc: {TimeUtc}",
-        name,
-        blob.Length,
-        DateTime.UtcNow);
-
-    using var reader = new StreamReader(blob);
-    var content = await reader.ReadToEndAsync();
-
-    _logger.LogInformation(
-        "Blob content read successfully. BlobName: {BlobName}, ContentLength: {ContentLength}",
-        name,
-        content.Length);
-
-    if (string.IsNullOrWhiteSpace(content))
+    public async Task Run(
+        [BlobTrigger("invoices/{name}", Connection = "AzureWebJobsStorage")]
+        Stream blob,
+        string name,
+        CancellationToken cancellationToken)
     {
-        _logger.LogWarning(
-            "Blob validation failed because the blob is empty. BlobName: {BlobName}",
-            name);
+        _logger.LogInformation(
+            "Blob processing started. BlobName: {BlobName}, SizeBytes: {SizeBytes}, TimeUtc: {TimeUtc}",
+            name,
+            blob.Length,
+            DateTime.UtcNow);
 
-        return;
-    }
+        var result = await _invoiceProcessor.ProcessAsync(
+            blob,
+            name,
+            cancellationToken);
 
-    _logger.LogInformation(
-        "Blob validation succeeded. BlobName: {BlobName}",
-        name);
-	
+        if (!result.IsValid)
+        {
+            _logger.LogWarning(
+                "Invoice processing did not complete. BlobName: {BlobName}, Reason: {FailureReason}",
+                result.BlobName,
+                result.FailureReason);
+
+            return;
+        }
+
+        _logger.LogInformation(
+            "Invoice processing succeeded. BlobName: {BlobName}, ContentLength: {ContentLength}, ProcessedAtUtc: {ProcessedAtUtc}",
+            result.BlobName,
+            result.ContentLength,
+            result.ProcessedAtUtc);
     }
 }
