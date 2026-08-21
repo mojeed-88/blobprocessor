@@ -19,7 +19,10 @@ public class BlobProcessor
 
     [Function("BlobProcessor")]
     public async Task Run(
-        [BlobTrigger("invoices/{name}", Connection = "AzureWebJobsStorage")]
+        [BlobTrigger(
+    "invoices/{name}",
+    Source = BlobTriggerSource.EventGrid,
+    Connection = "AzureWebJobsStorage")]
         Stream blob,
         string name,
         CancellationToken cancellationToken)
