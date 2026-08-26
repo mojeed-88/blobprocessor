@@ -16,8 +16,8 @@ builder.Services.AddScoped<InvoiceProcessor>();
 builder.Services.AddScoped<ProcessedInvoiceStore>();
 
 
-// builder.Services.AddOpenTelemetry()
-//    .UseFunctionsWorkerDefaults()
-//    .UseAzureMonitorExporter();
+builder.Services.AddOpenTelemetry()
+    .UseFunctionsWorkerDefaults()
+    .UseAzureMonitorExporter();
 
 builder.Build().Run();

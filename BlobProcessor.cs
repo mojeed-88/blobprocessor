@@ -18,40 +18,46 @@ public class BlobProcessor
     }
 
     [Function("BlobProcessor")]
-    public async Task Run(
-        [BlobTrigger(
-    "invoices/{name}",
-    Source = BlobTriggerSource.EventGrid,
-    Connection = "AzureWebJobsStorage")]
-        Stream blob,
-        string name,
-        CancellationToken cancellationToken)
+public async Task Run(
+    [BlobTrigger(
+        "invoices/{name}",
+        Source = BlobTriggerSource.EventGrid,
+        Connection = "AzureWebJobsStorage")]
+    Stream blob,
+    string name,
+    CancellationToken cancellationToken)
+{
+    using var scope = _logger.BeginScope(new Dictionary<string, object>
     {
-        _logger.LogInformation(
-            "Blob processing started. BlobName: {BlobName}, SizeBytes: {SizeBytes}, TimeUtc: {TimeUtc}",
-            name,
-            blob.Length,
-            DateTime.UtcNow);
+        ["BlobName"] = name
+    });
 
-        var result = await _invoiceProcessor.ProcessAsync(
-            blob,
-            name,
-            cancellationToken);
+    _logger.LogInformation(
+    "Blob processing started. BlobName: {BlobName}, SizeBytes: {SizeBytes}",
+    name,
+    blob.Length);
 
-        if (!result.IsValid)
-        {
-            _logger.LogWarning(
-                "Invoice processing did not complete. BlobName: {BlobName}, Reason: {FailureReason}",
-                result.BlobName,
-                result.FailureReason);
+    var result = await _invoiceProcessor.ProcessAsync(
+        blob,
+        name,
+        cancellationToken);
 
-            return;
-        }
+    if (!result.IsValid)
+    {
+        _logger.LogWarning(
+    "Invoice processing did not complete. BlobName: {BlobName}, ProcessingStatus: {ProcessingStatus}, FailureReason: {FailureReason}",
+    result.BlobName,
+    "SkippedOrFailed",
+    result.FailureReason);
 
-        _logger.LogInformation(
-            "Invoice processing succeeded. BlobName: {BlobName}, ContentLength: {ContentLength}, ProcessedAtUtc: {ProcessedAtUtc}",
-            result.BlobName,
-            result.ContentLength,
-            result.ProcessedAtUtc);
+        return;
     }
+
+    _logger.LogInformation(
+    "Invoice processing succeeded. BlobName: {BlobName}, ProcessingStatus: {ProcessingStatus}, ContentLength: {ContentLength}",
+    result.BlobName,
+    "Succeeded",
+    result.ContentLength);
+
+     }
 }
