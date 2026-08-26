@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Data.Tables;
+using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 
 namespace blobprocessor.Services;
@@ -13,12 +14,28 @@ public sealed class ProcessedInvoiceStore
 
     public ProcessedInvoiceStore(IConfiguration configuration)
     {
-        var connectionString =
-            configuration["ProcessedInvoicesStorage"]
-            ?? throw new InvalidOperationException(
-                "ProcessedInvoicesStorage configuration is missing.");
+        var localConnectionString =
+            configuration["ProcessedInvoicesStorage"];
 
-        _tableClient = new TableClient(connectionString, TableName);
+        if (!string.IsNullOrWhiteSpace(localConnectionString))
+        {
+            // Local development with Azurite
+            _tableClient = new TableClient(
+                localConnectionString,
+                TableName);
+
+            return;
+        }
+
+        var tableEndpoint =
+            configuration["ProcessedInvoicesTableEndpoint"]
+            ?? throw new InvalidOperationException(
+                "ProcessedInvoicesTableEndpoint configuration is missing.");
+
+        _tableClient = new TableClient(
+            new Uri(tableEndpoint),
+            TableName,
+            new DefaultAzureCredential());
     }
 
     public async Task<bool> TryClaimAsync(
