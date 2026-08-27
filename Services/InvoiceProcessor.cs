@@ -25,12 +25,14 @@ public sealed class InvoiceProcessor
         return new InvoiceProcessingResult
         {
             BlobName = blobName,
+	    ProcessingStatus = "Duplicate",
             IsValid = false,
             FailureReason = "Invoice has already been claimed for processing.",
             ContentLength = 0,
             ProcessedAtUtc = DateTime.UtcNow
         };
     }
+
 
     using var reader = new StreamReader(blob);
 
@@ -46,6 +48,7 @@ public sealed class InvoiceProcessor
         return new InvoiceProcessingResult
         {
             BlobName = blobName,
+	    ProcessingStatus = "ValidationFailed",
             IsValid = false,
             FailureReason = "Blob is empty.",
             ContentLength = content.Length,
@@ -60,6 +63,7 @@ public sealed class InvoiceProcessor
     return new InvoiceProcessingResult
     {
         BlobName = blobName,
+	ProcessingStatus = "Succeeded",
         IsValid = true,
         ContentLength = content.Length,
         ProcessedAtUtc = DateTime.UtcNow

@@ -43,20 +43,20 @@ public async Task Run(
         cancellationToken);
 
     if (!result.IsValid)
-    {
-        _logger.LogWarning(
-    "Invoice processing did not complete. BlobName: {BlobName}, ProcessingStatus: {ProcessingStatus}, FailureReason: {FailureReason}",
-    result.BlobName,
-    "SkippedOrFailed",
-    result.FailureReason);
+{
+    _logger.LogWarning(
+        "Invoice processing did not complete. BlobName: {BlobName}, ProcessingStatus: {ProcessingStatus}, FailureReason: {FailureReason}",
+        result.BlobName,
+        result.ProcessingStatus,
+        result.FailureReason);
 
-        return;
-    }
+    return;
+}
 
     _logger.LogInformation(
     "Invoice processing succeeded. BlobName: {BlobName}, ProcessingStatus: {ProcessingStatus}, ContentLength: {ContentLength}",
     result.BlobName,
-    "Succeeded",
+    result.ProcessingStatus,
     result.ContentLength);
 
      }
