@@ -39,39 +39,52 @@ public sealed class InvoiceProcessor
                 $"Invoice '{blobName}' is currently being processed.");
         }
 
-        using var reader = new StreamReader(blob);
-
-        var content = await reader.ReadToEndAsync(cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(content))
+        try
         {
-            await _processedInvoiceStore.MarkValidationFailedAsync(
+            using var reader = new StreamReader(blob);
+
+            var content = await reader.ReadToEndAsync(cancellationToken);
+
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                await _processedInvoiceStore.MarkValidationFailedAsync(
+                    blobName,
+                    "Blob is empty.",
+                    cancellationToken);
+
+                return new InvoiceProcessingResult
+                {
+                    BlobName = blobName,
+                    ProcessingStatus = "ValidationFailed",
+                    IsValid = false,
+                    FailureReason = "Blob is empty.",
+                    ContentLength = content.Length,
+                    ProcessedAtUtc = DateTime.UtcNow
+                };
+            }
+
+            await _processedInvoiceStore.MarkSucceededAsync(
                 blobName,
-                "Blob is empty.",
                 cancellationToken);
 
             return new InvoiceProcessingResult
             {
                 BlobName = blobName,
-                ProcessingStatus = "ValidationFailed",
-                IsValid = false,
-                FailureReason = "Blob is empty.",
+                ProcessingStatus = "Succeeded",
+                IsValid = true,
                 ContentLength = content.Length,
                 ProcessedAtUtc = DateTime.UtcNow
             };
         }
-
-        await _processedInvoiceStore.MarkSucceededAsync(
-            blobName,
-            cancellationToken);
-
-        return new InvoiceProcessingResult
+        catch
         {
-            BlobName = blobName,
-            ProcessingStatus = "Succeeded",
-            IsValid = true,
-            ContentLength = content.Length,
-            ProcessedAtUtc = DateTime.UtcNow
-        };
+            await _processedInvoiceStore.MarkFailedAsync(
+                blobName,
+                "Unexpected processing failure.",
+                cancellationToken);
+
+            throw;
+        }
     }
 }
