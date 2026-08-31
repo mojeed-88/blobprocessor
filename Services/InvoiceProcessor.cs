@@ -16,27 +16,33 @@ public sealed class InvoiceProcessor
     string blobName,
     CancellationToken cancellationToken = default)
 {
-    var claimed = await _processedInvoiceStore.TryClaimAsync(
-        blobName,
-        cancellationToken);
+    var claimResult = await _processedInvoiceStore.TryClaimAsync(
+    blobName,
+    cancellationToken);
 
-    if (!claimed)
+if (claimResult == InvoiceClaimResult.AlreadySucceeded)
+{
+    return new InvoiceProcessingResult
     {
-        return new InvoiceProcessingResult
-        {
-            BlobName = blobName,
-	    ProcessingStatus = "Duplicate",
-            IsValid = false,
-            FailureReason = "Invoice has already been claimed for processing.",
-            ContentLength = 0,
-            ProcessedAtUtc = DateTime.UtcNow
-        };
-    }
+        BlobName = blobName,
+        ProcessingStatus = "Duplicate",
+        IsValid = false,
+        FailureReason = "Invoice has already been processed successfully.",
+        ContentLength = 0,
+        ProcessedAtUtc = DateTime.UtcNow
+    };
+}
 
+if (claimResult == InvoiceClaimResult.InProgress)
+{
+    throw new InvalidOperationException(
+        $"Invoice '{blobName}' is currently being processed.");
+}
 
     using var reader = new StreamReader(blob);
 
     var content = await reader.ReadToEndAsync(cancellationToken);
+
 
     if (string.IsNullOrWhiteSpace(content))
     {

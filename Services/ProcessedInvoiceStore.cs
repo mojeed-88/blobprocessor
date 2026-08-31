@@ -38,30 +38,81 @@ public sealed class ProcessedInvoiceStore
             new DefaultAzureCredential());
     }
 
-    public async Task<bool> TryClaimAsync(
-        string invoiceId,
-        CancellationToken cancellationToken = default)
+    public async Task<InvoiceClaimResult> TryClaimAsync(
+    string invoiceId,
+    CancellationToken cancellationToken = default)
+{
+    var now = DateTime.UtcNow;
+
+    var entity = new TableEntity(PartitionKey, invoiceId)
     {
-        var entity = new TableEntity(PartitionKey, invoiceId)
+        ["Status"] = "Processing",
+        ["ClaimedAtUtc"] = now
+    };
+
+    try
+    {
+        await _tableClient.AddEntityAsync(
+            entity,
+            cancellationToken);
+
+        return InvoiceClaimResult.Claimed;
+    }
+    catch (RequestFailedException ex) when (ex.Status == 409)
+    {
+        var existingResponse =
+            await _tableClient.GetEntityAsync<TableEntity>(
+                PartitionKey,
+                invoiceId,
+                cancellationToken: cancellationToken);
+
+        var existingEntity = existingResponse.Value;
+        var status = existingEntity.GetString("Status");
+
+        if (string.Equals(
+            status,
+            "Succeeded",
+            StringComparison.OrdinalIgnoreCase))
         {
-            ["Status"] = "Processing",
-            ["ClaimedAtUtc"] = DateTime.UtcNow
-        };
+            return InvoiceClaimResult.AlreadySucceeded;
+        }
+
+        if (string.Equals(
+            status,
+            "Processing",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            var claimedAtUtc =
+                existingEntity.GetDateTimeOffset("ClaimedAtUtc");
+
+            if (claimedAtUtc.HasValue &&
+                now - claimedAtUtc.Value.UtcDateTime <
+                TimeSpan.FromMinutes(5))
+            {
+                return InvoiceClaimResult.InProgress;
+            }
+        }
+
+        existingEntity["Status"] = "Processing";
+        existingEntity["ClaimedAtUtc"] = now;
 
         try
         {
-            await _tableClient.AddEntityAsync(
-                entity,
+            await _tableClient.UpdateEntityAsync(
+                existingEntity,
+                existingEntity.ETag,
+                TableUpdateMode.Merge,
                 cancellationToken);
 
-            return true;
+            return InvoiceClaimResult.Claimed;
         }
-        catch (RequestFailedException ex) when (ex.Status == 409)
+        catch (RequestFailedException updateEx)
+            when (updateEx.Status == 412)
         {
-            return false;
+            return InvoiceClaimResult.InProgress;
         }
     }
-
+}
     public async Task MarkSucceededAsync(
         string invoiceId,
         CancellationToken cancellationToken = default)
