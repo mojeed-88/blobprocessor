@@ -12,9 +12,8 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.ConfigureFunctionsWebApplication();
 
 builder.Services.AddScoped<InvoiceProcessor>();
-
 builder.Services.AddScoped<ProcessedInvoiceStore>();
-
+builder.Services.AddScoped<InvoiceDeadLetterStore>();
 
 builder.Services.AddOpenTelemetry()
     .UseFunctionsWorkerDefaults()
