@@ -15,7 +15,7 @@ public sealed class ProcessedInvoiceStore
     public ProcessedInvoiceStore(IConfiguration configuration)
     {
         var localConnectionString =
-            configuration["ProcessedInvoicesStorage"];
+            configuration["BusinessStorage"];
 
         if (!string.IsNullOrWhiteSpace(localConnectionString))
         {
@@ -28,9 +28,9 @@ public sealed class ProcessedInvoiceStore
         }
 
         var tableEndpoint =
-            configuration["ProcessedInvoicesTableEndpoint"]
+            configuration["BusinessTableEndpoint"]
             ?? throw new InvalidOperationException(
-                "ProcessedInvoicesTableEndpoint configuration is missing.");
+                "BusinessTableEndpoint configuration is missing.");
 
         _tableClient = new TableClient(
             new Uri(tableEndpoint),
