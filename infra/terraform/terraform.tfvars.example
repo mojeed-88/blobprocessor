@@ -1,0 +1,11 @@
+environment          = "dev"
+location             = "canadacentral"
+storage_account_name = "stfastshipdev001"
+
+log_analytics_workspace_id = "<log-analytics-workspace-resource-id>"
+service_plan_name          = "<flex-consumption-service-plan-name>"
+function_app_name          = "func-fastship-<environment>"
+
+# Supply blob_extension_key securely; do not commit the real value.
+# Example:
+# blob_extension_key = "<sensitive-blob-extension-key>"
