@@ -1,0 +1,32 @@
+name: Azure OIDC Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-azure-login:
+    name: Test Azure login
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: bdc928ac-e4b6-43fb-9a87-d3847f849fc0
+          tenant-id: 2d1d2e7a-366b-4132-bc65-2f3cb077207f
+          subscription-id: 95bc4174-0029-4a66-b2a7-8a98759a80b2
+
+      - name: Verify development resource group
+        run: |
+          az group show \
+            --name rg-fastship-dev \
+            --query "{name:name,location:location,provisioningState:properties.provisioningState}" \
+            --output table
