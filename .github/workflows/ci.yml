@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build:
     name: Build application
@@ -25,9 +29,20 @@ jobs:
       - name: Build application
         run: dotnet build blobprocessor.csproj --configuration Release --no-restore
 
-  terraform:
-    name: Validate Terraform
+    terraform:
+    name: Terraform checks and plan
     runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      TF_VAR_environment: ${{ vars.TF_VAR_environment }}
+      TF_VAR_location: ${{ vars.TF_VAR_location }}
+      TF_VAR_storage_account_name: ${{ vars.TF_VAR_storage_account_name }}
+      TF_VAR_log_analytics_workspace_id: ${{ vars.TF_VAR_log_analytics_workspace_id }}
+      TF_VAR_service_plan_name: ${{ vars.TF_VAR_service_plan_name }}
+      TF_VAR_function_app_name: ${{ vars.TF_VAR_function_app_name }}
+      TF_VAR_blob_extension_key: ${{ secrets.TF_VAR_blob_extension_key }}
+
 
     defaults:
       run:
@@ -50,3 +65,16 @@ jobs:
 
       - name: Validate Terraform
         run: terraform validate
+
+      - name: Login to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: bdc928ac-e4b6-43fb-9a87-d3847f849fc0
+          tenant-id: 2d1d2e7a-366b-4132-bc65-2f3cb077207f
+          subscription-id: 95bc4174-0029-4a66-b2a7-8a98759a80b2
+
+      - name: Initialize Terraform with remote backend
+        run: terraform init -reconfigure
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color
