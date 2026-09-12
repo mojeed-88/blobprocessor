@@ -29,7 +29,7 @@ jobs:
       - name: Build application
         run: dotnet build blobprocessor.csproj --configuration Release --no-restore
 
-terraform:
+  terraform:
     name: Terraform checks and plan
     runs-on: ubuntu-latest
     environment: dev
@@ -42,7 +42,6 @@ terraform:
       TF_VAR_service_plan_name: ${{ vars.TF_VAR_service_plan_name }}
       TF_VAR_function_app_name: ${{ vars.TF_VAR_function_app_name }}
       TF_VAR_blob_extension_key: ${{ secrets.TF_VAR_blob_extension_key }}
-
 
     defaults:
       run:
