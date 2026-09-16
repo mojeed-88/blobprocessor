@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: '1.14.3'
 
@@ -66,7 +66,7 @@ jobs:
         run: terraform validate
 
       - name: Login to Azure using OIDC
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: bdc928ac-e4b6-43fb-9a87-d3847f849fc0
           tenant-id: 2d1d2e7a-366b-4132-bc65-2f3cb077207f
