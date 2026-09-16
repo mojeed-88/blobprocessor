@@ -77,3 +77,11 @@ jobs:
         with:
           app-name: ${{ vars.TF_VAR_function_app_name }}
           package: ./publish
+
+      - name: Health check
+        run: |
+          curl --fail \
+            --retry 6 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            "https://${{ vars.TF_VAR_function_app_name }}.azurewebsites.net/api/HealthCheck"
