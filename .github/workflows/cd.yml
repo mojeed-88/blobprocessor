@@ -39,6 +39,9 @@ jobs:
       - name: Build application
         run: dotnet build blobprocessor.csproj --configuration Release --no-restore
 
+      - name: Publish application
+        run: dotnet publish blobprocessor.csproj --configuration Release --no-restore --output ./publish
+
       - name: Login to Azure using OIDC
         uses: azure/login@v2
         with:
@@ -68,3 +71,9 @@ jobs:
       - name: Terraform apply
         working-directory: infra/terraform
         run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Deploy Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ vars.TF_VAR_function_app_name }}
+          package: ./publish
