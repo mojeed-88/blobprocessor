@@ -63,4 +63,8 @@ jobs:
 
       - name: Terraform plan
         working-directory: infra/terraform
-        run: terraform plan -input=false -no-color
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/terraform
+        run: terraform apply -input=false -auto-approve tfplan
