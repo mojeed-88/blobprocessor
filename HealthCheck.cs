@@ -28,6 +28,7 @@ public class HealthCheck
         {
             Status = "Healthy",
             Service = "blobprocessor",
+            Version = "1.0.0",
             TimestampUtc = DateTime.UtcNow
         });
     }
